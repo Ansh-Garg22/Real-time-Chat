@@ -1,0 +1,61 @@
+<!-- Client-side code (HTML/EJS) -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chat Room</title>
+</head>
+<body>
+  <h1>Welcome, <%= user.username %></h1>
+  <div id="messages"></div>
+  <input type="text" id="message-input" placeholder="Type your message..." />
+  <button onclick="sendMessage()">Send</button>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const userId = "<%= user._id %>"; // Get user ID from server-side
+    const username = "<%= user.username %>";
+
+    socket.on("connect", () => {
+      console.log("Connected to server");
+      socket.emit("join-room", userId); // Send user ID to join room
+      getInitialMessages(); // Get initial messages when connected
+    });
+
+    socket.on("new-message", (message) => {
+      const messagesContainer = document.getElementById("messages");
+      const messageElement = document.createElement("div");
+      messageElement.textContent = `${message.sender.username}: ${message.content}`;
+      messagesContainer.appendChild(messageElement);
+    });
+
+    async function getInitialMessages() {
+      try {
+        const response = await fetch("/get-messages"); // Fetch messages from server
+        const messages = await response.json();
+        const messagesContainer = document.getElementById("messages");
+        messages.forEach((message) => {
+          const messageElement = document.createElement("div");
+          messageElement.textContent = `${message.sender.username}: ${message.content}`;
+          messagesContainer.appendChild(messageElement);
+        });
+      } catch (error) {
+        console.error("Error fetching messages:", error);
+      }
+    }
+
+    function sendMessage() {
+      const messageInput = document.getElementById("message-input");
+      const content = messageInput.value.trim();
+      if (content) {
+        socket.emit("send-message", {
+          content: content,
+          senderId: userId,
+          sendername: username, // Send user ID along with the message
+        });
+        messageInput.value = "";
+      }
+    }
+  </script>
+</body>
+</html>
