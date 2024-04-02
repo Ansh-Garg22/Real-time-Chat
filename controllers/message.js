@@ -13,19 +13,18 @@ exports.sendMessage = async function (req, res, next) {
   } catch (error) {
     next(error);
   }
+};exports.getMessages = async function (req, res, next) {
+  try {
+    // Fetch messages from the database
+    const messages = await Message.find()
+      .populate("sender", "username") // Populate sender details (e.g., username)
+      .sort({ timestamp: -1 }) // Sort messages by timestamp in descending order
+      .limit(20); // Limit the number of messages to retrieve to 20
+
+    // Send the messages as a JSON response
+    res.status(200).json(messages);
+  } catch (error) {
+    // Handle errors
+    next(error);
+  }
 };
-exports.getMessages = async function (req, res, next) {
-    try {
-      // Fetch messages from the database
-      const messages = await Message.find()
-        .populate("sender", "username") // Populate sender details (e.g., username)
-        .sort({ timestamp: 1 }) // Sort messages by timestamp in descending order
-        .limit(10); // Limit the number of messages to retrieve (adjust as needed)
-  
-      // Send the messages as a JSON response
-      res.status(200).json(messages);
-    } catch (error) {
-      // Handle errors
-      next(error);
-    }
-  };

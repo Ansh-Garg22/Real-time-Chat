@@ -13,7 +13,7 @@ const authMiddleware = require("./middleware/auth");
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server); // Attach Socket.IO to the HTTP server
-
+const User = require("./models/user");
 app.set("view engine", "ejs");
 app.set("views", path.resolve("./views"));
 app.use(cookieParser());
@@ -83,18 +83,22 @@ io.on("connection", (socket) => {
       console.error("Error joining room:", error);
     }
   });
-
   socket.on("send-message", async (data) => {
     const { content, senderId, sendername } = data;
     const room = await Room.findOne();
-    const message = new Message({ content, sender: senderId });
+    const user = await User.findById(senderId);
+
+    const message = new Message({
+      content,
+      sender: user._id, // Assign the ObjectId reference to the User document
+    });
     await message.save();
+
     io.to(room._id.toString()).emit("new-message", {
       content: message.content,
       sender: {
-        userId: senderId, // Use senderId passed from the client
-        username: sendername,
-        // Include any other sender details you need
+        _id: user._id, // Use the ObjectId reference
+        username: user.username, // Include the username
       },
     });
   });

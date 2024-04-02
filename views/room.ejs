@@ -19,7 +19,7 @@
         padding: 25px;
         display: flex;
         flex-direction: column;
-        margin:40px auto;
+        margin: 40px auto;
       }
       .message {
         margin-bottom: 10px;
@@ -73,7 +73,6 @@
         <button class="send-btn" onclick="sendMessage()">Send</button>
       </div>
     </div>
-
     <script src="/socket.io/socket.io.js"></script>
     <script>
       const socket = io();
@@ -92,7 +91,6 @@
         messageElement.classList.add("message"); // Add a base class for styling
 
         const messageText = document.createElement("div");
-
         const usernameElement = document.createElement("div");
         usernameElement.textContent = message.sender.username;
 
@@ -102,18 +100,19 @@
         messageText.appendChild(usernameElement);
         messageText.appendChild(contentElement);
 
-        if (message.sender.userId === userId) {
+        if (message.sender._id === userId) {
           // Message sent by the current user
           messageElement.classList.add("message--self");
           messageElement.appendChild(messageText);
         } else {
           // Message sent by another user
           messageElement.classList.add("message--other");
-          messageElement.appendChild(messageText);
+          messageElement.prepend(messageText);
         }
 
         messagesContainer.appendChild(messageElement);
         messagesContainer.scrollTop = messagesContainer.scrollHeight; // Scroll to the bottom
+
       });
 
       async function getInitialMessages() {
@@ -122,12 +121,14 @@
           const messages = await response.json();
           const messagesContainer = document.getElementById("messages");
 
-          messages.forEach((message) => {
+          // Reverse the order of messages to display newest at the bottom
+          const reversedMessages = messages.slice().reverse();
+
+          reversedMessages.forEach((message) => {
             const messageElement = document.createElement("div");
             messageElement.classList.add("message"); // Add a base class for styling
 
             const messageText = document.createElement("div");
-
             const usernameElement = document.createElement("div");
             usernameElement.textContent = message.sender.username;
 
@@ -137,19 +138,19 @@
             messageText.appendChild(usernameElement);
             messageText.appendChild(contentElement);
 
-            if (message.sender.userId=== userId) {
+            if (message.sender._id === userId) {
               // Message sent by the current user
               messageElement.classList.add("message--self");
               messageElement.appendChild(messageText);
             } else {
               // Message sent by another user
               messageElement.classList.add("message--other");
-              messageElement.appendChild(messageText);
+              messageElement.prepend(messageText);
             }
 
-            messagesContainer.appendChild(messageElement);
+            messagesContainer.appendChild(messageElement);          messagesContainer.scrollTop = messagesContainer.scrollHeight; // Scroll to the bottom
+
           });
-          messagesContainer.scrollTop = messagesContainer.scrollHeight; // Scroll to the bottom
         } catch (error) {
           console.error("Error fetching messages:", error);
         }
