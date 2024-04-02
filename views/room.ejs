@@ -1,61 +1,173 @@
-<!-- Client-side code (HTML/EJS) -->
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Chat Room</title>
-</head>
-<body>
-  <h1>Welcome, <%= user.username %></h1>
-  <div id="messages"></div>
-  <input type="text" id="message-input" placeholder="Type your message..." />
-  <button onclick="sendMessage()">Send</button>
+  <head>
+    <title>Chat Room</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+      * {
+        font-family: "Poppins", sans-serif;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        /* margin-inline: 420px; */
+        /* margin-top: 40px; */
+        width: 600px;
+        height: 600px; /* Set a fixed height for the container */
+        border: 3px solid black;
+        border-radius: 10px;
+        padding: 25px;
+        display: flex;
+        flex-direction: column;
+        margin:40px auto;
+      }
+      .message {
+        margin-bottom: 10px;
+        max-width: 70%;
+        border-radius: 10px;
+        padding: 5px 10px;
+        font-size: 1.1rem;
+      }
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const socket = io();
-    const userId = "<%= user._id %>"; // Get user ID from server-side
-    const username = "<%= user.username %>";
+      .message--self {
+        background-color: #dcf8c6; /* Green background for current user's messages */
+        align-self: flex-end;
+      }
 
-    socket.on("connect", () => {
-      console.log("Connected to server");
-      socket.emit("join-room", userId); // Send user ID to join room
-      getInitialMessages(); // Get initial messages when connected
-    });
+      .message--other {
+        background-color: #e2e2e2; /* Gray background for other users' messages */
+        align-self: flex-start;
+      }
 
-    socket.on("new-message", (message) => {
-      const messagesContainer = document.getElementById("messages");
-      const messageElement = document.createElement("div");
-      messageElement.textContent = `${message.sender.username}: ${message.content}`;
-      messagesContainer.appendChild(messageElement);
-    });
+      #messages {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        overflow-y: auto; /* Add vertical scrollbar if needed */
+      }
+      .send-btn {
+        font-size: 1.1rem;
+        padding: 4px;
+        margin-top: 15px;
+        margin-inline-start: 8px;
+      }
+      input {
+        font-size: 1.2rem;
+        padding: 5px;
+        width: 420px;
+        border-radius: 4px;
+        margin-top: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Welcome, <%= user.username %></h1>
+      <div id="messages"></div>
+      <div>
+        <input
+          type="text"
+          id="message-input"
+          placeholder="Type your message..."
+        />
+        <button class="send-btn" onclick="sendMessage()">Send</button>
+      </div>
+    </div>
 
-    async function getInitialMessages() {
-      try {
-        const response = await fetch("/get-messages"); // Fetch messages from server
-        const messages = await response.json();
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io();
+      const userId = "<%= user._id %>"; // Get user ID from server-side
+      const username = "<%= user.username %>";
+
+      socket.on("connect", () => {
+        console.log("Connected to server");
+        socket.emit("join-room", userId); // Send user ID to join room
+        getInitialMessages(); // Get initial messages when connected
+      });
+
+      socket.on("new-message", (message) => {
         const messagesContainer = document.getElementById("messages");
-        messages.forEach((message) => {
-          const messageElement = document.createElement("div");
-          messageElement.textContent = `${message.sender.username}: ${message.content}`;
-          messagesContainer.appendChild(messageElement);
-        });
-      } catch (error) {
-        console.error("Error fetching messages:", error);
-      }
-    }
+        const messageElement = document.createElement("div");
+        messageElement.classList.add("message"); // Add a base class for styling
 
-    function sendMessage() {
-      const messageInput = document.getElementById("message-input");
-      const content = messageInput.value.trim();
-      if (content) {
-        socket.emit("send-message", {
-          content: content,
-          senderId: userId,
-          sendername: username, // Send user ID along with the message
-        });
-        messageInput.value = "";
+        const messageText = document.createElement("div");
+
+        const usernameElement = document.createElement("div");
+        usernameElement.textContent = message.sender.username;
+
+        const contentElement = document.createElement("div");
+        contentElement.textContent = message.content;
+
+        messageText.appendChild(usernameElement);
+        messageText.appendChild(contentElement);
+
+        if (message.sender.userId === userId) {
+          // Message sent by the current user
+          messageElement.classList.add("message--self");
+          messageElement.appendChild(messageText);
+        } else {
+          // Message sent by another user
+          messageElement.classList.add("message--other");
+          messageElement.appendChild(messageText);
+        }
+
+        messagesContainer.appendChild(messageElement);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight; // Scroll to the bottom
+      });
+
+      async function getInitialMessages() {
+        try {
+          const response = await fetch("/get-messages"); // Fetch messages from server
+          const messages = await response.json();
+          const messagesContainer = document.getElementById("messages");
+
+          messages.forEach((message) => {
+            const messageElement = document.createElement("div");
+            messageElement.classList.add("message"); // Add a base class for styling
+
+            const messageText = document.createElement("div");
+
+            const usernameElement = document.createElement("div");
+            usernameElement.textContent = message.sender.username;
+
+            const contentElement = document.createElement("div");
+            contentElement.textContent = message.content;
+
+            messageText.appendChild(usernameElement);
+            messageText.appendChild(contentElement);
+
+            if (message.sender.userId=== userId) {
+              // Message sent by the current user
+              messageElement.classList.add("message--self");
+              messageElement.appendChild(messageText);
+            } else {
+              // Message sent by another user
+              messageElement.classList.add("message--other");
+              messageElement.appendChild(messageText);
+            }
+
+            messagesContainer.appendChild(messageElement);
+          });
+          messagesContainer.scrollTop = messagesContainer.scrollHeight; // Scroll to the bottom
+        } catch (error) {
+          console.error("Error fetching messages:", error);
+        }
       }
-    }
-  </script>
-</body>
+
+      function sendMessage() {
+        const messageInput = document.getElementById("message-input");
+        const content = messageInput.value.trim();
+
+        if (content) {
+          socket.emit("send-message", {
+            content: content,
+            senderId: userId,
+            sendername: username, // Send user ID along with the message
+          });
+          messageInput.value = "";
+        }
+      }
+    </script>
+  </body>
 </html>
