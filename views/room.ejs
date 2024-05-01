@@ -2,83 +2,64 @@
 <html>
   <head>
     <title>Chat Room</title>
-    <style>
-      @import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
-      * {
-        font-family: "Poppins", sans-serif;
-        margin: 0;
-        padding: 0;
-      }
-      .container {
-        /* margin-inline: 420px; */
-        /* margin-top: 40px; */
-        width: 600px;
-        height: 600px; /* Set a fixed height for the container */
-        border: 3px solid black;
-        border-radius: 10px;
-        padding: 25px;
-        display: flex;
-        flex-direction: column;
-        margin: 40px auto;
-      }
-      .message {
-        margin-bottom: 10px;
-        max-width: 70%;
-        border-radius: 10px;
-        padding: 5px 10px;
-        font-size: 1.1rem;
-      }
-
-      .message--self {
-        background-color: #dcf8c6; /* Green background for current user's messages */
-        align-self: flex-end;
-      }
-
-      .message--other {
-        background-color: #e2e2e2; /* Gray background for other users' messages */
-        align-self: flex-start;
-      }
-
-      #messages {
-        display: flex;
-        flex-direction: column;
-        flex-grow: 1;
-        overflow-y: auto; /* Add vertical scrollbar if needed */
-      }
-      .send-btn {
-        font-size: 1.1rem;
-        padding: 4px;
-        margin-top: 15px;
-        margin-inline-start: 8px;
-      }
-      input {
-        font-size: 1.2rem;
-        padding: 5px;
-        width: 420px;
-        border-radius: 4px;
-        margin-top: 15px;
-      }
-    </style>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+   <link rel="stylesheet" href="/css/chatrrom.css"><link rel="icon" type="image/x-icon" href="/images/favicon.ico">
   </head>
   <body>
+    
     <div class="container">
-      <h1>Welcome, <%= user.username %></h1>
-      <div id="messages"></div>
-      <div>
-        <input
-          type="text"
-          id="message-input"
-          placeholder="Type your message..."
-        />
-        <button class="send-btn" onclick="sendMessage()">Send</button>
+      <div class="left">
+        <div class="search-container">
+          
+            <input type="text" placeholder="Search.." name="search">
+            <button type="submit"><i class="fa fa-search"></i></button>
+          
+        </div>
+        <div class="box">
+          <img src="/images/user.png" alt="" />
+          <h3 style="font-size: 1.5rem">Alumni 1</h3>
+        </div>
+        <div class="box">
+          <img src="/images/user2.png" alt="" />
+          <h3 style="font-size: 1.5rem">User 1</h3>
+        </div>
+      </div>
+      <div class="right">
+        <div class="head">
+          <img src="/images/user.png" alt="" />
+          <h1 style="margin-left: 10px">Welcome, <%= user.username %></h1>
+        </div>
+        <div id="messages"></div>
+        <div class="input-container">
+          <input
+            type="text"
+            id="message-input"
+            placeholder="Type your message..."
+          />
+          <i
+            class="fa-solid fa-paper-plane"
+            class="send-btn"
+            onclick="sendMessage()"
+          ></i>
+        </div>
       </div>
     </div>
+    
+      </section>
+    </footer>
+    <!-- Include moment.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
       const socket = io();
       const userId = "<%= user._id %>"; // Get user ID from server-side
       const username = "<%= user.username %>";
-
       socket.on("connect", () => {
         console.log("Connected to server");
         socket.emit("join-room", userId); // Send user ID to join room
@@ -90,72 +71,75 @@
         const messageElement = document.createElement("div");
         messageElement.classList.add("message"); // Add a base class for styling
 
-        const messageText = document.createElement("div");
-        const usernameElement = document.createElement("div");
+        const messageHeader = document.createElement("div");
+        messageHeader.classList.add("message-header");
+        const usernameElement = document.createElement("span");
         usernameElement.textContent = message.sender.username;
+        const timestampElement = document.createElement("span");
+        timestampElement.textContent = moment(message.timestamp).format("LT"); // Change the format to show only the time
+        messageHeader.appendChild(usernameElement);
+        messageHeader.appendChild(timestampElement);
 
         const contentElement = document.createElement("div");
+        contentElement.classList.add("message-content");
         contentElement.textContent = message.content;
 
-        messageText.appendChild(usernameElement);
-        messageText.appendChild(contentElement);
+        messageElement.appendChild(messageHeader);
+        messageElement.appendChild(contentElement);
 
         if (message.sender._id === userId) {
-          // Message sent by the current user
           messageElement.classList.add("message--self");
-          messageElement.appendChild(messageText);
         } else {
-          // Message sent by another user
           messageElement.classList.add("message--other");
-          messageElement.prepend(messageText);
         }
 
         messagesContainer.appendChild(messageElement);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight; // Scroll to the bottom
-
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
       });
 
       async function getInitialMessages() {
         try {
-          const response = await fetch("/get-messages"); // Fetch messages from server
+          const response = await fetch("/get-messages");
           const messages = await response.json();
           const messagesContainer = document.getElementById("messages");
 
-          // Reverse the order of messages to display newest at the bottom
           const reversedMessages = messages.slice().reverse();
-
           reversedMessages.forEach((message) => {
             const messageElement = document.createElement("div");
-            messageElement.classList.add("message"); // Add a base class for styling
+            messageElement.classList.add("message");
 
-            const messageText = document.createElement("div");
-            const usernameElement = document.createElement("div");
+            const messageHeader = document.createElement("div");
+            messageHeader.classList.add("message-header");
+            const usernameElement = document.createElement("span");
             usernameElement.textContent = message.sender.username;
+            const timestampElement = document.createElement("span");
+            timestampElement.textContent = moment(message.timestamp).format(
+              "LT"
+            ); // Change the format to show only the time
+
+            messageHeader.appendChild(usernameElement);
+            messageHeader.appendChild(timestampElement);
 
             const contentElement = document.createElement("div");
+            contentElement.classList.add("message-content");
             contentElement.textContent = message.content;
 
-            messageText.appendChild(usernameElement);
-            messageText.appendChild(contentElement);
+            messageElement.appendChild(messageHeader);
+            messageElement.appendChild(contentElement);
 
             if (message.sender._id === userId) {
-              // Message sent by the current user
               messageElement.classList.add("message--self");
-              messageElement.appendChild(messageText);
             } else {
-              // Message sent by another user
               messageElement.classList.add("message--other");
-              messageElement.prepend(messageText);
             }
 
-            messagesContainer.appendChild(messageElement);          messagesContainer.scrollTop = messagesContainer.scrollHeight; // Scroll to the bottom
-
+            messagesContainer.appendChild(messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
           });
         } catch (error) {
           console.error("Error fetching messages:", error);
         }
       }
-
       function sendMessage() {
         const messageInput = document.getElementById("message-input");
         const content = messageInput.value.trim();

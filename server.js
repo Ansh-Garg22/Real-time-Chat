@@ -26,15 +26,20 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // MongoDB connection
+mongoose.set("strictQuery", false);
 mongoose
-  .connect("mongodb://127.0.0.1:27017/chatapp", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect(
+    "mongodb+srv://Bandar:bandar0123@cluster0.txh1lwj.mongodb.net/chatapp?retryWrites=true&w=majority&appName=Cluster0",
+    {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    }
+  )
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.log(err));
-
 // Routes
+app.use(express.static("public"));
+
 app.use("/auth", authRoutes);
 app.use("/protected", protectedRoutes);
 app.get("/chat", authMiddleware.verifyToken, roomController.renderChatRoom);
