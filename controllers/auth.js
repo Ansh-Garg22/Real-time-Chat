@@ -1,5 +1,4 @@
 // controllers/authController.js
-const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
@@ -21,8 +20,7 @@ exports.signup = async function (req, res, next) {
       return res.render('signup', { error }); // Render signup page with error message
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ username, password: hashedPassword });
+    const user = new User({ username, password }); // Store password as plain text
     await user.save();
     res.redirect('/'); // Redirect to chat page after successful signup
   } catch (error) {
@@ -39,8 +37,7 @@ exports.login = async function (req, res, next) {
       const error = "User not found"; // Set error message
       return res.render('login', { error }); // Render login page with error message
     }
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) {
+    if (password !== user.password) { // Check password directly (not recommended)
       const error = "Incorrect password"; // Set error message
       return res.render('login', { error }); // Render login page with error message
     }
