@@ -42,7 +42,7 @@ mongoose
 // Routes
 app.use(express.static("public"));
 
-app.use("/auth", authRoutes);
+app.use("/", authRoutes);
 app.use("/protected", protectedRoutes);
 app.get("/chat", authMiddleware.verifyToken, roomController.renderChatRoom);
 app.get(
