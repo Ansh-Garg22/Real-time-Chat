@@ -13,7 +13,14 @@ exports.renderLoginForm = function (req, res) {
 
 exports.signup = async function (req, res, next) {
   try {
-    const { username, password } = req.body;
+    const { username, password, confirmPassword } = req.body;
+    
+    // Check if passwords match
+    if (password !== confirmPassword) {
+      const error = "Passwords do not match"; // Set error message
+      return res.render('signup', { error }); // Render signup page with error message
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({ username, password: hashedPassword });
     await user.save();
@@ -23,16 +30,19 @@ exports.signup = async function (req, res, next) {
   }
 };
 
+
 exports.login = async function (req, res, next) {
   try {
     const { username, password } = req.body;
     const user = await User.findOne({ username });
     if (!user) {
-      return res.status(401).json({ message: 'Authentication failed' });
+      const error = "User not found"; // Set error message
+      return res.render('login', { error }); // Render login page with error message
     }
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) {
-      return res.status(401).json({ message: 'Authentication failed' });
+      const error = "Incorrect password"; // Set error message
+      return res.render('login', { error }); // Render login page with error message
     }
     const token = jwt.sign(
       { userId: user._id, username: user.username },
@@ -47,6 +57,7 @@ exports.login = async function (req, res, next) {
     next(error);
   }
 };
+
 
 exports.logout = function (req, res) {
   res.clearCookie('authToken');
