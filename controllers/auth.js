@@ -17,7 +17,7 @@ exports.signup = async function (req, res, next) {
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({ username, password: hashedPassword });
     await user.save();
-    res.status(201).json({ message: 'User created successfully' });
+    res.redirect('/auth/login'); // Redirect to chat page after successful signup
   } catch (error) {
     next(error);
   }
@@ -46,4 +46,10 @@ exports.login = async function (req, res, next) {
   } catch (error) {
     next(error);
   }
+};
+
+exports.logout = function (req, res) {
+  res.clearCookie('authToken');
+
+  res.redirect('/auth/login');
 };
