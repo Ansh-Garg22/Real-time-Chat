@@ -24,12 +24,14 @@ app.use(express.static(__dirname + "/public"));
 // Middleware for parsing request bodies
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+const dotenv = require('dotenv');
+dotenv.config();
 
 // MongoDB connection
 mongoose.set("strictQuery", false);
 mongoose
   .connect(
-    "mongodb+srv://Bandar:bandar0123@cluster0.txh1lwj.mongodb.net/chatapp?retryWrites=true&w=majority&appName=Cluster0",
+    process.env.MONGOURL,
     {
       useNewUrlParser: true,
       useUnifiedTopology: true,
@@ -49,7 +51,7 @@ app.get(
   messageController.getMessages
 );
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 // Create the global chat room if it doesn't exist
